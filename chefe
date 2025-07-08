@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 Chefe - Enviar Compromissos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .message-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            font-size: 18px;
+            resize: vertical;
+            font-family: inherit;
+            margin-bottom: 20px;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .examples {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .examples h3 {
+            color: #0066cc;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .examples ul {
+            color: #0066cc;
+            padding-left: 20px;
+        }
+
+        .examples li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+            font-size: 0.95em;
+        }
+
+        .sent-messages {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .sent-message {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4facfe;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message-time {
+            color: #6c757d;
+            font-size: 0.8em;
+            margin-bottom: 8px;
+        }
+
+        .message-text {
+            color: #495057;
+            line-height: 1.4;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #28a745;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .status-indicator {
+            text-align: center;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #155724;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👨‍💼 Chefe</h1>
+            <p>Enviar compromissos para a secretária</p>
+        </div>
+
+        <div class="main-content">
+            <div class="status-indicator">
+                <strong>🟢 Sistema Conectado</strong><br>
+                Suas mensagens chegam automaticamente para a secretária
+            </div>
+
+            <textarea 
+                id="message-input" 
+                class="message-input" 
+                placeholder="Digite seu compromisso aqui..."
+            ></textarea>
+
+            <button class="send-btn" onclick="sendMessage()">📤 Enviar para Secretária</button>
+
+            <h3 style="color: #495057; margin-bottom: 15px;">📨 Últimas mensagens enviadas:</h3>
+            <div class="sent-messages" id="sent-messages">
+                <div style="text-align: center; color: #6c757d; padding: 20px;">
+                    Nenhuma mensagem enviada ainda
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+
+    <script>
+        // 🔥 CONFIGURAÇÃO FIREBASE - SUBSTITUA PELA SUA!
+        const firebaseConfig = {
+            apiKey: "AIzaSyCtfuOaQZzUvnlXGa3-S9ie7Eq5-_3mBTk",
+            authDomain: "sistema-agendamento-3a735.firebaseapp.com",
+            databaseURL: "https://sistema-agendamento-3a735-default-rtdb.firebaseio.com",
+            projectId: "sistema-agendamento-3a735",
+            storageBucket: "sistema-agendamento-3a735.firebasestorage.app",
+            messagingSenderId: "197370619052",
+            appId: "1:197370619052:web:98f534ce82ecc5556ceb09"
+        };
+
+        // Verificar se Firebase está configurado
+        let database;
+        let isFirebaseConfigured = false;
+
+        try {
+            if (firebaseConfig.apiKey && firebaseConfig.databaseURL) {
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                isFirebaseConfigured = true;
+                console.log('✅ Firebase conectado!');
+            } else {
+                console.log('⚠️ Firebase não configurado - usando modo demo');
+            }
+        } catch (error) {
+            console.log('⚠️ Erro Firebase - usando modo demo:', error);
+        }
+
+        let sentMessages = [];
+
+        function sendMessage() {
+            const messageText = document.getElementById('message-input').value.trim();
+            
+            if (!messageText) {
+                showNotification('Por favor, digite uma mensagem!', 'error');
+                return;
+            }
+
+            const message = {
+                text: messageText,
+                timestamp: new Date().toISOString(),
+                timestampBR: new Date().toLocaleString('pt-BR'),
+                status: 'enviado',
+                sender: 'chefe',
+                id: Date.now()
+            };
+
+            if (isFirebaseConfigured) {
+                // 🔥 ENVIAR PARA FIREBASE
+                database.ref('messages').push(message)
+                    .then(() => {
+                        document.getElementById('message-input').value = '';
+                        showNotification('🔥 Mensagem enviada via Firebase!');
+                    })
+                    .catch((error) => {
+                        showNotification('Erro Firebase: ' + error.message, 'error');
+                        // Fallback para localStorage se Firebase falhar
+                        sendToLocalStorage(message);
+                    });
+            } else {
+                // 📦 MODO DEMO (localStorage)
+                sendToLocalStorage(message);
+            }
+        }
+
+        function sendToLocalStorage(message) {
+            sentMessages.unshift(message);
+            const allMessages = JSON.parse(localStorage.getItem('agenda_messages') || '[]');
+            allMessages.unshift(message);
+            localStorage.setItem('agenda_messages', JSON.stringify(allMessages));
+            localStorage.setItem('new_message_notification', 'true');
+            
+            document.getElementById('message-input').value = '';
+            updateSentMessages();
+            showNotification('📤 Mensagem enviada (modo demo)!');
+        }
+
+        function updateSentMessages() {
+            const container = document.getElementById('sent-messages');
+            
+            if (sentMessages.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Nenhuma mensagem enviada ainda</div>';
+                return;
+            }
+
+            container.innerHTML = sentMessages.slice(0, 5).map(message => {
+                const status = message.status || 'enviado';
+                const statusText = {
+                    'enviado': '📤 Enviado',
+                    'processando': '⚙️ Processando',
+                    'agendado': '✅ Agendado'
+                };
+
+                return `
+                <div class="sent-message">
+                    <div class="message-time">
+                        📅 ${message.timestampBR || new Date(message.timestamp).toLocaleString('pt-BR')}
+                        <span style="float: right; color: #007bff; font-weight: 600;">
+                            ${statusText[status] || '📤 Enviado'}
+                        </span>
+                    </div>
+                    <div class="message-text">"${message.text}"</div>
+                    ${message.agenda ? `
+                        <div style="background: #e8f5e8; padding: 10px; border-radius: 5px; margin-top: 8px; font-size: 0.9em;">
+                            <strong>✅ Agendado:</strong> ${message.agenda.titulo} - 
+                            ${new Date(message.agenda.data).toLocaleDateString('pt-BR')} às ${message.agenda.hora}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            }).join('');
+        }
+
+        function syncWithFirebase() {
+            if (!isFirebaseConfigured) return;
+            
+            // 🔥 ESCUTAR MENSAGENS EM TEMPO REAL
+            database.ref('messages').orderByChild('sender').equalTo('chefe')
+                .on('value', (snapshot) => {
+                    sentMessages = [];
+                    snapshot.forEach((child) => {
+                        sentMessages.push({
+                            firebaseKey: child.key,
+                            ...child.val()
+                        });
+                    });
+                    sentMessages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    updateSentMessages();
+                });
+        }
+
+        function syncWithLocalStorage() {
+            const saved = localStorage.getItem('agenda_messages');
+            if (saved) {
+                const allMessages = JSON.parse(saved);
+                sentMessages = allMessages.filter(m => m.sender === 'chefe') || [];
+                updateSentMessages();
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateConnectionStatus() {
+            const statusEl = document.querySelector('.status-indicator');
+            if (isFirebaseConfigured) {
+                statusEl.innerHTML = '<strong>🔥 Firebase Conectado</strong><br>Sincronização em tempo real ativada';
+                statusEl.style.background = '#e8f5e8';
+            } else {
+                statusEl.innerHTML = '<strong>📦 Modo Demo</strong><br>Configure o Firebase para sincronização real entre dispositivos';
+                statusEl.style.background = '#fff3cd';
+            }
+        }
+
+        // Enter para enviar
+        document.getElementById('message-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                sendMessage();
+            }
+        });
+
+        // Inicializar ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            updateConnectionStatus();
+            
+            if (isFirebaseConfigured) {
+                syncWithFirebase();
+                showNotification('🔥 Conectado ao Firebase!');
+            } else {
+                syncWithLocalStorage();
+                // Verificar mudanças no localStorage a cada 3 segundos
+                setInterval(syncWithLocalStorage, 3000);
+                showNotification('📦 Modo demo ativo. Configure Firebase para sincronização real.', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
